@@ -30,6 +30,7 @@ const ParamEditorFC: React.FC<Props> = ({ params, model }) => {
 				);
 				values[param.id] = paramValue ? paramValue.value : "";
 			});
+
 			return values;
 		}
 	);
@@ -77,7 +78,7 @@ const ParamEditorFC: React.FC<Props> = ({ params, model }) => {
 	);
 };
 
-const dataItems: Props = {
+const dataItem: Props = {
 	params: [
 		{ id: 1, name: "Назначение", type: "string" },
 		{
@@ -94,6 +95,8 @@ const dataItems: Props = {
 	},
 };
 
+const dataItems: Props[] = [dataItem, dataItem];
+
 const App: React.FC = () => {
 	return (
 		<>
@@ -104,12 +107,9 @@ const App: React.FC = () => {
 				<h2 className="text-xl text-center">Редактор параметров</h2>
 			</header>
 			<main className="flex justify-around items-center flex-wrap gap-8">
-				<ParamEditorFC params={dataItems.params} model={dataItems.model} />
-				<ParamEditorFC params={dataItems.params} model={dataItems.model} />
-				<ParamEditorFC params={dataItems.params} model={dataItems.model} />
-				<ParamEditorFC params={dataItems.params} model={dataItems.model} />
-				<ParamEditorFC params={dataItems.params} model={dataItems.model} />
-				<ParamEditorFC params={dataItems.params} model={dataItems.model} />
+				{dataItems.map((item, index) => (
+					<ParamEditorFC key={index} params={item.params} model={item.model} />
+				))}
 			</main>
 		</>
 	);
