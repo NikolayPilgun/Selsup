@@ -1,38 +1,23 @@
 import { useState } from "react";
-import { ParamValue, Props } from "../types/ParamTypes";
+import { Model, Props } from "../types/ParamTypes";
 
 const ParamEditor: React.FC<Props> = ({ params, model }) => {
-	const [editedValues, setEditedValues] = useState<{ [key: number]: string }>(
-		() => {
-			const values: { [key: number]: string } = {};
-			params.forEach((param) => {
-				const paramValue = model.paramValues.find(
-					(pv) => pv.paramId === param.id
-				);
-				values[param.id] = paramValue ? paramValue.value : "";
-			});
-
-			return values;
-		}
+	const [editedParams, setEditedParams] = useState<Map<number, string>>(
+		new Map()
 	);
 
-	const handleInputChange = (paramId: number, value: string) => {
-		console.log(value);
-
-		setEditedValues((prevValues) => ({
-			...prevValues,
-			[paramId]: value,
-		}));
+	const updateParamValue = (paramId: number, value: string) => {
+		setEditedParams(
+			(prevEditedParams) => new Map(prevEditedParams.set(paramId, value))
+		);
 	};
 
-	const getModel = (): void => {
-		const paramValues: ParamValue[] = Object.keys(editedValues).map(
-			(paramId) => ({
-				paramId: parseInt(paramId),
-				value: editedValues[parseInt(paramId)],
-			})
-		);
-		console.log({ paramValues });
+	const getModel = (): Model => {
+		const updatedParamValues = model.paramValues.map((paramValue) => ({
+			...paramValue,
+			value: editedParams.get(paramValue.paramId) || paramValue.value,
+		}));
+		return { paramValues: updatedParamValues };
 	};
 
 	return (
@@ -46,8 +31,13 @@ const ParamEditor: React.FC<Props> = ({ params, model }) => {
 						<input
 							className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-md"
 							type="text"
-							value={editedValues[param.id]}
-							onChange={(e) => handleInputChange(param.id, e.target.value)}
+							value={
+								editedParams.get(param.id) ||
+								model.paramValues.find((pv) => pv.paramId === param.id)
+									?.value ||
+								""
+							}
+							onChange={(e) => updateParamValue(param.id, e.target.value)}
 						/>
 					</div>
 				))
@@ -56,7 +46,7 @@ const ParamEditor: React.FC<Props> = ({ params, model }) => {
 			)}
 
 			<button
-				onClick={() => getModel()}
+				onClick={() => console.log(getModel())}
 				className="w-[150px] bg-purple-600 hover:bg-purple-800 text-white font-bold py-2 px-4 rounded transition duration-300 ease-in-out"
 			>
 				getModel
