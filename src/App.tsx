@@ -1,103 +1,38 @@
-import React, { useState } from "react";
-
-interface Param {
-	id: number;
-	name: string;
-	type: "string";
-}
-
-interface ParamValue {
-	paramId: number;
-	value: string;
-}
-
-interface Model {
-	paramValues: ParamValue[];
-}
-
-interface Props {
-	params: Param[];
-	model: Model;
-}
-
-const ParamEditorFC: React.FC<Props> = ({ params, model }) => {
-	const [editedValues, setEditedValues] = useState<{ [key: number]: string }>(
-		() => {
-			const values: { [key: number]: string } = {};
-			params.forEach((param) => {
-				const paramValue = model.paramValues.find(
-					(pv) => pv.paramId === param.id
-				);
-				values[param.id] = paramValue ? paramValue.value : "";
-			});
-
-			return values;
-		}
-	);
-
-	const handleInputChange = (paramId: number, value: string) => {
-		setEditedValues((prevValues) => ({
-			...prevValues,
-			[paramId]: value,
-		}));
-	};
-
-	const getModel = (): void => {
-		const paramValues: ParamValue[] = Object.keys(editedValues).map(
-			(paramId) => ({
-				paramId: parseInt(paramId),
-				value: editedValues[parseInt(paramId)],
-			})
-		);
-		console.log({ paramValues });
-	};
-
-	return (
-		<article className="flex flex-col gap-5 justify-center items-center">
-			{params.map((param) => (
-				<div className="w-[350px] " key={param.id}>
-					<label className="block text-gray-700 font-bold mb-2">
-						{param.name}
-					</label>
-					<input
-						className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-md"
-						type="text"
-						value={editedValues[param.id]}
-						onChange={(e) => handleInputChange(param.id, e.target.value)}
-					/>
-				</div>
-			))}
-
-			<button
-				className="w-[150px] bg-purple-600 hover:bg-purple-800 text-white font-bold py-2 px-4 rounded transition duration-300 ease-in-out"
-				onClick={() => getModel()}
-			>
-				getModel
-			</button>
-		</article>
-	);
-};
-
-const dataItem: Props = {
-	params: [
-		{ id: 1, name: "Назначение", type: "string" },
-		{
-			id: 2,
-			name: "Длина",
-			type: "string",
-		},
-	],
-	model: {
-		paramValues: [
-			{ paramId: 1, value: "повседневное" },
-			{ paramId: 2, value: "макси" },
-		],
-	},
-};
-
-const dataItems: Props[] = [dataItem, dataItem];
+import React, { useEffect, useState } from "react";
+import ParamEditor from "./components/ParamEditor";
+import { Model, Param } from "./types/ParamTypes";
+import { fetchData } from "./utilities/asyncRequest";
 
 const App: React.FC = () => {
+	const [dataParams, setDataParams] = useState<Param[] | null>(null);
+	const [dataModel, setDataModel] = useState<Model | null>(null);
+
+	useEffect(() => {
+		const fetchDataFromBackend = async () => {
+			try {
+				const result = await fetchData<Param[]>("http://localhost:3003/params");
+				setDataParams(result);
+			} catch (error) {
+				console.error(error);
+			}
+		};
+
+		fetchDataFromBackend();
+	}, []);
+
+	useEffect(() => {
+		const fetchDataFromBackend = async () => {
+			try {
+				const result = await fetchData<Model>("http://localhost:3004/model");
+				setDataModel(result);
+			} catch (error) {
+				console.error(error);
+			}
+		};
+
+		fetchDataFromBackend();
+	}, []);
+
 	return (
 		<>
 			<header className="my-7">
@@ -107,9 +42,11 @@ const App: React.FC = () => {
 				<h2 className="text-xl text-center">Редактор параметров</h2>
 			</header>
 			<main className="flex justify-around items-center flex-wrap gap-8">
-				{dataItems.map((item, index) => (
-					<ParamEditorFC key={index} params={item.params} model={item.model} />
-				))}
+				{dataParams != null && dataModel != null ? (
+					<ParamEditor params={dataParams} model={dataModel} />
+				) : (
+					<div>Загрузка...</div>
+				)}
 			</main>
 		</>
 	);
